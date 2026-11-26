@@ -3,3 +3,13 @@
 
 .flight-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.badge{display:inline-block;padding:4px 7px;border-radius:20px;font-size:10px;font-weight:800}.badge.cheapest{background:#e7f8ee;color:#16814a}.badge.fastest{background:#fff4df;color:#9a6200}.badge.direct{background:#eaf1ff;color:#246bfe}.flight-card{transition:transform .18s,box-shadow .18s}.flight-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px #102b4d0c}.book-demo{cursor:pointer;transition:.15s}.book-demo:hover{background:#246bfe;color:white}.book-demo:disabled{opacity:.65;cursor:wait}@media(max-width:900px){.result-controls{gap:12px}.result-controls label{flex-wrap:wrap}}
 .details-btn{margin-top:8px;border:1px solid #dce6f4;border-radius:9px;background:#fff;color:#203b61;font-weight:800;padding:9px 12px;cursor:pointer}.flight-detail-panel{grid-column:1/-1;padding:14px 16px;background:#f6f9ff;border:1px solid #e1eaf6;border-radius:12px;color:#30445f}.flight-detail-panel strong{display:block;margin-bottom:10px}.detail-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px;font-size:13px}.flight-detail-panel small{color:#718098}@media(max-width:600px){.detail-items{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Robust tablet/mobile airport autocomplete dropdown */
+.route-grid label.autocomplete-active{z-index:10000!important}
+.airport-input-wrap{position:relative;width:100%;display:block;z-index:10000}
+.airport-input-wrap input{width:100%}
+.airport-suggestions{position:absolute!important;top:calc(100% + 4px)!important;left:0!important;right:0!important;width:100%!important;max-height:260px;overflow-y:auto;display:block!important;background:#fff;border:1px solid #dfe6ef;border-radius:12px;box-shadow:0 12px 28px rgba(16,43,77,.18);z-index:10001!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.airport-suggestions[hidden]{display:none!important}
+.airport-suggestions button{display:block;width:100%;padding:12px 14px;border:0;background:#fff;text-align:left;cursor:pointer;color:#071b3a;touch-action:manipulation}
+.airport-suggestions button:active,.airport-suggestions button:hover{background:#f1f6ff}
+.airport-suggestions strong{display:block;font-size:14px}
+.airport-suggestions small{display:block;color:#68758a;font-size:12px;margin-top:3px}
