@@ -28,3 +28,6 @@
 .airport-suggestions-fixed button.active,.airport-suggestions-fixed button:active{background:#edf4ff}
 .airport-suggestions-fixed strong{display:block;font-size:14px;font-weight:700}
 .airport-suggestions-fixed small{display:block;font-size:12px;color:#65748a;margin-top:3px}
+
+/* Native airport autocomplete - remove conflicting custom dropdown styles */
+.airport-suggestions,.airport-suggestions-fixed{display:none!important}
