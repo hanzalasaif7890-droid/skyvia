@@ -41,7 +41,7 @@ function airportAutocomplete(input){
   try{
    const r=await fetch('/api/airports?q='+encodeURIComponent(q)+'&limit=8');
    const d=await r.json();if(token!==requestToken)return;
-   const matches=d.airports||d.results||[];
+   const matches=Array.isArray(d)?d:(d.airports||d.results||[]);
    if(!r.ok||!matches.length){close();return;}
    matches.forEach(a=>{
     const name=a.city||a.name||a.airport_name||a.label||'Airport';
