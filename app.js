@@ -36,6 +36,19 @@ airportAutocomplete($('from'));airportAutocomplete($('to'));
 let liveOffers=[];
 const esc = v => String(v ?? '').replace(/[&<>\"']/g, ch => { if(ch==='&') return '&amp;'; if(ch==='<') return '&lt;'; if(ch==='>') return '&gt;'; if(ch==='\"') return '&quot;'; return '&#39;'; });
 function formatDuration(iso){if(!iso)return "—";const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);return m?((m[1]||0)+"h "+(m[2]||0)+"m"):"—";}
+function airlineCodeForFlight(f){
+ const raw=(f.flightNumbers||'').match(/^([A-Z0-9]{2,3})/)?.[1]||'';
+ const known={'6E':'6E','AI':'AI','SG':'SG','QP':'QP','IX':'IX','UK':'UK','FZ':'FZ','EK':'EK','QR':'QR','EY':'EY','BA':'BA','LH':'LH','SQ':'SQ','TG':'TG','TK':'TK','GF':'GF','WY':'WY','UL':'UL','MH':'MH','VN':'VN','CX':'CX','JL':'JL','NH':'NH','AC':'AC','UA':'UA','AA':'AA','DL':'DL','AF':'AF','KL':'KL','FR':'FR','W6':'W6','U2':'U2','G8':'G8','I5':'I5'};
+ return known[raw]||raw;
+}
+function airlineLogoMarkup(f){
+ const code=airlineCodeForFlight(f);
+ const initials=(f.airline||'Airline').split(/\\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase();
+ if(!code) return '<span class="airline-logo-fallback">'+esc(initials)+'</span>';
+ const airhex='https://content.airhex.com/content/logos/airlines_100_100_s.png?code='+encodeURIComponent(code)+'&theme=light';
+ const kiwi='https://images.kiwi.com/airlines/64/'+encodeURIComponent(code)+'.png';
+ return '<img class="airline-logo" src="'+airhex+'" alt="'+esc(f.airline)+' logo" data-kiwi="'+kiwi+'" data-initials="'+esc(initials)+'" onerror="if(this.dataset.kiwi){this.src=this.dataset.kiwi;this.dataset.kiwi=\'\';}else{this.outerHTML=\'<span class=\\\'airline-logo-fallback\\\'\'+\'\>'+this.dataset.initials+\'</span>\';}">';
+}
 function renderFlights(){
  let list=[...liveOffers];
  const timeFilter=$('departureTime')?.value||'all';
@@ -45,7 +58,7 @@ function renderFlights(){
  const max=Number($('maxPrice').value||0);if(max>0)list=list.filter(f=>f.price<=max);
  const sort=$('sort').value;if(sort==='price')list.sort((a,b)=>a.price-b.price);if(sort==='duration')list.sort((a,b)=>(a.durationMinutes||99999)-(b.durationMinutes||99999));if(sort==='recommended')list.sort((a,b)=>(a.stops||0)-(b.stops||0)||a.price-b.price||(a.durationMinutes||99999)-(b.durationMinutes||99999));
  const cheapest=liveOffers.length?Math.min(...liveOffers.map(f=>f.price)):0; const fastest=liveOffers.length?Math.min(...liveOffers.map(f=>f.durationMinutes||99999)):0;
- $('flightList').innerHTML=list.length?list.map(f=>{const carrierCode=(f.flightNumbers||'').match(/^([A-Z0-9]{2,3})/)?.[1]||'';const logoUrl=carrierCode?'https://images.kiwi.com/airlines/64/'+encodeURIComponent(carrierCode)+'.png':'';return '<article class="flight-card"><div class="airline"><div class="airline-brand">'+(logoUrl?'<img class="airline-logo" src="'+logoUrl+'" alt="'+esc(f.airline)+' logo" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'"><span class="airline-logo-fallback" style="display:none">'+esc(carrierCode||'✈')+'</span>':'<span class="airline-logo-fallback">✈</span>')+'<strong>'+esc(f.airline)+'</strong></div><small>'+esc(f.flightNumbers)+' · '+(f.stops?' '+f.stops+' stop(s)':'Non-stop')+'</small><div class="flight-badges">'+(f.price===cheapest?'<span class="badge cheapest">Lowest price</span>':'')+(f.durationMinutes===fastest?'<span class="badge fastest">Fastest</span>':'')+(f.stops===0?'<span class="badge direct">Non-stop</span>':'')+'</div><button class="details-btn" data-detail="'+esc(f.id)+'">Flight details</button></div><div class="times"><div><div class="time">'+esc(f.depart)+'</div><small>'+esc(f.origin)+'</small></div><div class="middle">'+esc(f.duration)+'<div class="line"></div>'+(f.stops?f.stops+' stop(s)':'Direct')+'</div><div><div class="time">'+esc(f.arrive)+'</div><small>'+esc(f.destination)+'</small></div></div><div class="price">'+esc(f.currency)+' '+Number(f.price).toLocaleString('en-IN')+'<small>Provider live offer · final fare may change</small><button class="book-demo" data-offer="'+esc(f.id)+'">View booking options</button></div></article>';}).join(''):'<p class="no-results">No live flights match your filters.</p>';
+ $('flightList').innerHTML=list.length?list.map(f=>{return '<article class="flight-card"><div class="airline"><div class="airline-brand">'+airlineLogoMarkup(f)+'<strong>'+esc(f.airline)+'</strong></div><small>'+esc(f.flightNumbers)+' · '+(f.stops?' '+f.stops+' stop(s)':'Non-stop')+'</small><div class="flight-badges">'+(f.price===cheapest?'<span class="badge cheapest">Lowest price</span>':'')+(f.durationMinutes===fastest?'<span class="badge fastest">Fastest</span>':'')+(f.stops===0?'<span class="badge direct">Non-stop</span>':'')+'</div><button class="details-btn" data-detail="'+esc(f.id)+'">Flight details</button></div><div class="times"><div><div class="time">'+esc(f.depart)+'</div><small>'+esc(f.origin)+'</small></div><div class="middle">'+esc(f.duration)+'<div class="line"></div>'+(f.stops?f.stops+' stop(s)':'Direct')+'</div><div><div class="time">'+esc(f.arrive)+'</div><small>'+esc(f.destination)+'</small></div></div><div class="price">'+esc(f.currency)+' '+Number(f.price).toLocaleString('en-IN')+'<small>Provider live offer · final fare may change</small><button class="book-demo" data-offer="'+esc(f.id)+'">View booking options</button></div></article>';}).join(''):'<p class="no-results">No live flights match your filters.</p>';
 }
 $('sort').onchange=renderFlights;$('nonstop').onchange=renderFlights;$('airlineFilter').onchange=renderFlights;$('maxPrice').oninput=renderFlights;$('departureTime')?.addEventListener('change',renderFlights);
 $('searchForm').addEventListener('submit',async e=>{
