@@ -1,8 +1,8 @@
 name = "skyvia"
-main = "worker.js"
+main = "./worker.js"
 compatibility_date = "2026-11-26"
 
 [assets]
 directory = "."
 binding = "ASSETS"
-run_worker_first = true
+run_worker_first = ["/api/*"]
