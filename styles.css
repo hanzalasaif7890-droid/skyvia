@@ -20,3 +20,11 @@
 .airport-suggestions{position:absolute!important;top:calc(100% + 5px)!important;left:0!important;right:0!important;width:100%!important;max-height:280px;overflow-y:auto;display:block!important;z-index:10001!important;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px #102b4d25;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .airport-suggestions[hidden]{display:none!important}
 .airport-suggestions button{touch-action:manipulation;min-height:48px}
+
+/* Robust autocomplete: fixed portal dropdown outside label and layout stacking */
+.airport-suggestions-fixed{position:fixed!important;display:block!important;z-index:2147483000!important;left:0;top:0;max-height:300px;overflow:auto;background:#fff;color:#071b3a;border:1px solid #dfe6ef;border-radius:12px;box-shadow:0 12px 28px rgba(16,43,77,.24);padding:4px;}
+.airport-suggestions-fixed[hidden]{display:none!important}
+.airport-suggestions-fixed button{display:block;width:100%;min-height:48px;text-align:left;padding:10px 12px;border:0;border-radius:8px;background:#fff;color:#071b3a;touch-action:manipulation}
+.airport-suggestions-fixed button.active,.airport-suggestions-fixed button:active{background:#edf4ff}
+.airport-suggestions-fixed strong{display:block;font-size:14px;font-weight:700}
+.airport-suggestions-fixed small{display:block;font-size:12px;color:#65748a;margin-top:3px}
