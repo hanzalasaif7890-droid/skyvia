@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 let trip = 'round';
 const today = new Date(); today.setHours(0,0,0,0);
-const dateISO = d => { const x=new Date(today); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); };
+const dateISO = d => { const x=new Date(today); x.setDate(x.getDate()+d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
 const setDefaults = () => {
   if (!$('depart').value) $('depart').value = dateISO(7);
   if (!$('return').value) $('return').value = dateISO(11);
@@ -27,29 +27,41 @@ function showMultiCity(){
 }
 function hideMultiCity(){ $('multiCityBox')?.remove(); }
 function airportAutocomplete(input){
- const airports=[['Mumbai','BOM','Chhatrapati Shivaji Maharaj International Airport'],['Delhi','DEL','Indira Gandhi International Airport'],['Bengaluru','BLR','Kempegowda International Airport'],['Chennai','MAA','Chennai International Airport'],['Hyderabad','HYD','Rajiv Gandhi International Airport'],['Kolkata','CCU','Netaji Subhas Chandra Bose International Airport'],['Goa','GOI','Goa International Airport'],['Ahmedabad','AMD','Sardar Vallabhbhai Patel International Airport'],['Pune','PNQ','Pune Airport'],['Jaipur','JAI','Jaipur International Airport'],['Lucknow','LKO','Chaudhary Charan Singh International Airport'],['Amritsar','ATQ','Sri Guru Ram Dass Jee International Airport'],['Kochi','COK','Cochin International Airport'],['Indore','IDR','Devi Ahilya Bai Holkar Airport'],['Nagpur','NAG','Dr Babasaheb Ambedkar International Airport'],['Dubai','DXB','Dubai International Airport'],['Abu Dhabi','AUH','Zayed International Airport'],['London','LHR','Heathrow Airport'],['Singapore','SIN','Singapore Changi Airport'],['New York','JFK','John F Kennedy International Airport'],['Bangkok','BKK','Suvarnabhumi Airport'],['Doha','DOH','Hamad International Airport'],['Paris','CDG','Charles de Gaulle Airport'],['Toronto','YYZ','Toronto Pearson International Airport'],['Tokyo','HND','Haneda Airport'],['Istanbul','IST','Istanbul Airport'],['Colombo','CMB','Bandaranaike International Airport'],['Kathmandu','KTM','Tribhuvan International Airport'],['Maldives','MLE','Velana International Airport']];
  const label=input.closest('label');if(!label)return;
  let wrap=input.parentElement;
  if(!wrap.classList.contains('airport-input-wrap')){wrap=document.createElement('div');wrap.className='airport-input-wrap';input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);}
  const box=document.createElement('div');box.className='airport-suggestions';box.setAttribute('role','listbox');box.hidden=true;wrap.appendChild(box);
+ let timer=null,requestToken=0;
  function close(){box.hidden=true;label.classList.remove('autocomplete-active');}
- function render(){
-  const q=input.value.trim().toLowerCase();box.innerHTML='';
-  if(!q){close();return;}
-  const matches=airports.filter(a=>a.join(' ').toLowerCase().includes(q)).slice(0,8);
-  if(!matches.length){close();return;}
-  matches.forEach(a=>{
-   const item=document.createElement('button');item.type='button';item.setAttribute('role','option');
-   item.innerHTML='<strong>'+a[0]+' ('+a[1]+')</strong><small>'+a[2]+'</small>';
-   item.addEventListener('pointerdown',e=>e.preventDefault());
-   item.addEventListener('click',e=>{e.preventDefault();input.value=a[0]+' ('+a[1]+')';close();input.dispatchEvent(new Event('change',{bubbles:true}));});
-   box.appendChild(item);
-  });
-  box.hidden=false;label.classList.add('autocomplete-active');
+ function choose(a){input.value=a.name+' ('+a.code+')';close();input.dispatchEvent(new Event('change',{bubbles:true}));}
+ async function render(){
+  const q=input.value.trim();box.innerHTML='';
+  if(q.length<2){close();return;}
+  const token=++requestToken;
+  try{
+   const r=await fetch('/api/airports?q='+encodeURIComponent(q)+'&limit=8');
+   const d=await r.json();if(token!==requestToken)return;
+   const matches=d.airports||d.results||[];
+   if(!r.ok||!matches.length){close();return;}
+   matches.forEach(a=>{
+    const name=a.city||a.name||a.airport_name||a.label||'Airport';
+    const code=a.iata||a.code||a.iata_code||'';
+    const airport=a.airport||a.airport_name||a.name||'';
+    if(!code)return;
+    const item=document.createElement('button');item.type='button';item.setAttribute('role','option');
+    item.innerHTML='<strong>'+esc(name)+' ('+esc(code)+')</strong><small>'+esc(airport)+'</small>';
+    item.addEventListener('click',e=>{e.preventDefault();choose({name,code});});
+    item.addEventListener('touchend',e=>{e.preventDefault();choose({name,code});},{passive:false});
+    box.appendChild(item);
+   });
+   if(!box.children.length){close();return;}
+   box.hidden=false;label.classList.add('autocomplete-active');
+  }catch{close();}
  }
- input.addEventListener('input',render);input.addEventListener('focus',render);
+ input.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(render,220);});
+ input.addEventListener('focus',render);
  input.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
- document.addEventListener('pointerdown',e=>{if(!wrap.contains(e.target))close();});
+ document.addEventListener('click',e=>{if(!wrap.contains(e.target))close();});
 }
 airportAutocomplete($('from'));airportAutocomplete($('to'));
 let liveOffers=[];
