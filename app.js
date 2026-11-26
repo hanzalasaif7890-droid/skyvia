@@ -34,6 +34,7 @@ function airportAutocomplete(input){
 }
 airportAutocomplete($('from'));airportAutocomplete($('to'));
 let liveOffers=[];
+const esc = v => String(v ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));
 function formatDuration(iso){if(!iso)return "—";const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);return m?((m[1]||0)+"h "+(m[2]||0)+"m"):"—";}
 function renderFlights(){
  let list=[...liveOffers];
@@ -44,7 +45,7 @@ function renderFlights(){
  const max=Number($('maxPrice').value||0);if(max>0)list=list.filter(f=>f.price<=max);
  const sort=$('sort').value;if(sort==='price')list.sort((a,b)=>a.price-b.price);if(sort==='duration')list.sort((a,b)=>(a.durationMinutes||99999)-(b.durationMinutes||99999));if(sort==='recommended')list.sort((a,b)=>(a.stops||0)-(b.stops||0)||a.price-b.price||(a.durationMinutes||99999)-(b.durationMinutes||99999));
  const cheapest=liveOffers.length?Math.min(...liveOffers.map(f=>f.price)):0; const fastest=liveOffers.length?Math.min(...liveOffers.map(f=>f.durationMinutes||99999)):0;
- $('flightList').innerHTML=list.length?list.map(f=>'<article class="flight-card"><div class="airline">✈ '+f.airline+'<small>'+f.flightNumbers+' · '+(f.stops?' '+f.stops+' stop(s)':'Non-stop')+'</small><div class="flight-badges">'+(f.price===cheapest?'<span class="badge cheapest">Lowest price</span>':'')+(f.durationMinutes===fastest?'<span class="badge fastest">Fastest</span>':'')+(f.stops===0?'<span class="badge direct">Non-stop</span>':'')+'</div></div><div class="times"><div><div class="time">'+f.depart+'</div><small>'+f.origin+'</small></div><div class="middle">'+f.duration+'<div class="line"></div>'+(f.stops?f.stops+' stop(s)':'Direct')+'</div><div><div class="time">'+f.arrive+'</div><small>'+f.destination+'</small></div></div><div class="price">'+f.currency+' '+f.price.toLocaleString('en-IN')+'<small>Live offer</small><button class="book-demo" data-offer="'+f.id+'">View flight</button></div></article>').join(''):'<p class="no-results">No live flights match your filters.</p>';
+ $('flightList').innerHTML=list.length?list.map(f=>'<article class="flight-card"><div class="airline">✈ '+esc(f.airline)+'<small>'+esc(f.flightNumbers)+' · '+(f.stops?' '+f.stops+' stop(s)':'Non-stop')+'</small><div class="flight-badges">'+(f.price===cheapest?'<span class="badge cheapest">Lowest price</span>':'')+(f.durationMinutes===fastest?'<span class="badge fastest">Fastest</span>':'')+(f.stops===0?'<span class="badge direct">Non-stop</span>':'')+'</div></div><div class="times"><div><div class="time">'+f.depart+'</div><small>'+f.origin+'</small></div><div class="middle">'+f.duration+'<div class="line"></div>'+(f.stops?f.stops+' stop(s)':'Direct')+'</div><div><div class="time">'+f.arrive+'</div><small>'+f.destination+'</small></div></div><div class="price">'+f.currency+' '+f.price.toLocaleString('en-IN')+'<small>Live offer</small><button class="book-demo" data-offer="'+f.id+'">View flight</button></div></article>').join(''):'<p class="no-results">No live flights match your filters.</p>';
 }
 $('sort').onchange=renderFlights;$('nonstop').onchange=renderFlights;$('airlineFilter').onchange=renderFlights;$('maxPrice').oninput=renderFlights;$('departureTime')?.addEventListener('change',renderFlights);
 $('searchForm').addEventListener('submit',async e=>{
