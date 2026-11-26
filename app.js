@@ -34,7 +34,7 @@ function airportAutocomplete(input){
 }
 airportAutocomplete($('from'));airportAutocomplete($('to'));
 let liveOffers=[];
-const esc = v => String(v ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));
+const esc = v => String(v ?? '').replace(/[&<>\"']/g, ch => { if(ch==='&') return '&amp;'; if(ch==='<') return '&lt;'; if(ch==='>') return '&gt;'; if(ch==='\"') return '&quot;'; return '&#39;'; });
 function formatDuration(iso){if(!iso)return "—";const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);return m?((m[1]||0)+"h "+(m[2]||0)+"m"):"—";}
 function renderFlights(){
  let list=[...liveOffers];
