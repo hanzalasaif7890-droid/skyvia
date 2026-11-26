@@ -34,23 +34,27 @@ function airportAutocomplete(input){
 }
 airportAutocomplete($('from'));airportAutocomplete($('to'));
 const sampleFlights=[{air:'IndiGo',code:'6E 204',depart:'06:10',arrive:'08:20',duration:'2h 10m',stops:0,price:5890},{air:'Air India',code:'AI 864',depart:'09:05',arrive:'11:25',duration:'2h 20m',stops:0,price:6420},{air:'Akasa Air',code:'QP 112',depart:'13:30',arrive:'16:10',duration:'2h 40m',stops:1,price:5190},{air:'IndiGo',code:'6E 501',depart:'18:45',arrive:'20:55',duration:'2h 10m',stops:0,price:7340}];
+let liveOffers=[];
+function formatDuration(iso){if(!iso)return "—";const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);return m?((m[1]||0)+"h "+(m[2]||0)+"m"):"—";}
 function renderFlights(){
- let list=[...sampleFlights];
+ let list=[...liveOffers];
  if($('nonstop').checked)list=list.filter(f=>f.stops===0);
- const airline=$('airlineFilter').value;if(airline!=='all')list=list.filter(f=>f.air===airline);
+ const airline=$('airlineFilter').value;if(airline!=='all')list=list.filter(f=>(f.airline||"").toLowerCase().includes(airline.toLowerCase()));
  const max=Number($('maxPrice').value||0);if(max>0)list=list.filter(f=>f.price<=max);
- const sort=$('sort').value;if(sort==='price')list.sort((a,b)=>a.price-b.price);if(sort==='duration')list.sort((a,b)=>a.duration.localeCompare(b.duration));
- $('flightList').innerHTML=list.length?list.map(f=>'<article class="flight-card"><div class="airline">✈ '+f.air+'<small>'+f.code+' · '+(f.stops?'1 stop':'Non-stop')+'</small></div><div class="times"><div><div class="time">'+f.depart+'</div><small>Departure</small></div><div class="middle">'+f.duration+'<div class="line"></div>'+(f.stops?'1 stop':'Direct')+'</div><div><div class="time">'+f.arrive+'</div><small>Arrival</small></div></div><div class="price">₹'+f.price.toLocaleString('en-IN')+'<small>sample fare / person</small><button class="book-demo">Select flight</button></div></article>').join(''):'<p class="no-results">No sample flights match your filters. Try changing your filters.</p>';
+ const sort=$('sort').value;if(sort==='price')list.sort((a,b)=>a.price-b.price);if(sort==='duration')list.sort((a,b)=>(a.durationMinutes||99999)-(b.durationMinutes||99999));
+ $('flightList').innerHTML=list.length?list.map(f=>'<article class="flight-card"><div class="airline">✈ '+f.airline+'<small>'+f.flightNumbers+' · '+(f.stops?' '+f.stops+' stop(s)':'Non-stop')+'</small></div><div class="times"><div><div class="time">'+f.depart+'</div><small>'+f.origin+'</small></div><div class="middle">'+f.duration+'<div class="line"></div>'+(f.stops?f.stops+' stop(s)':'Direct')+'</div><div><div class="time">'+f.arrive+'</div><small>'+f.destination+'</small></div></div><div class="price">'+f.currency+' '+f.price.toLocaleString('en-IN')+'<small>live offer</small><button class="book-demo" data-offer="'+f.id+'">View flight</button></div></article>').join(''):'<p class="no-results">No live flights match your filters.</p>';
 }
 $('sort').onchange=renderFlights;$('nonstop').onchange=renderFlights;$('airlineFilter').onchange=renderFlights;$('maxPrice').oninput=renderFlights;
-$('searchForm').addEventListener('submit',e=>{
- e.preventDefault();
- const destination=$('to').value.trim();if(!destination){alert('Please enter your destination.');$('to').focus();return;}
- if(!$('depart').value){alert('Please select a departure date.');$('depart').focus();return;}
- if(trip==='round'&&$('return').value&&$('return').value<$('depart').value){alert('Return date cannot be earlier than departure date. Please correct the dates.');$('return').focus();return;}
- $('routeTitle').textContent=$('from').value+' → '+destination;
- $('searchSummary').textContent=$('depart').value+(trip==='round'?' · Return '+$('return').value:' · One way')+' · '+$('travellers').value+' · Demo sample flights';
- $('results').classList.remove('hidden');renderFlights();$('results').scrollIntoView({behavior:'smooth'});
+$('searchForm').addEventListener('submit',async e=>{
+ e.preventDefault();const destination=$('to').value.trim();if(!destination){alert('Please enter your destination.');$('to').focus();return;}if(!$('depart').value){alert('Please select a departure date.');$('depart').focus();return;}
+ if(trip==='round'&&$('return').value&&$('return').value<$('depart').value){alert('Return date cannot be earlier than departure date.');$('return').focus();return;}
+ const code=x=>{const m=x.match(/\(([A-Z]{3})\)/);return m?m[1]:x.trim().toUpperCase().slice(0,3)};
+ const origin=code($('from').value),dest=code(destination);const travellerText=$('travellers').value;const adults=Number((travellerText.match(/\d+/)||[1])[0]);const cabin=travellerText.toLowerCase().includes('business')?'business':travellerText.toLowerCase().includes('premium')?'premium_economy':'economy';
+ $('routeTitle').textContent=origin+' → '+dest;$('searchSummary').textContent=$('depart').value+(trip==='round'?' · Return '+$('return').value:' · One way')+' · '+travellerText+' · Live search';
+ $('results').classList.remove('hidden');$('flightList').innerHTML='<p class="no-results">Searching live flight offers…</p>';$('results').scrollIntoView({behavior:'smooth'});
+ try{const resp=await fetch('/api/flights',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({origin,destination:dest,departureDate:$('depart').value,returnDate:trip==='round'?$('return').value:null,adults,cabin})});const data=await resp.json();if(!resp.ok||data.error){liveOffers=[];$('flightList').innerHTML='<p class="no-results">'+(data.error||'Live search failed')+'</p>';return;}
+ liveOffers=(data.offers||[]).flatMap(o=>(o.legs||[]).map(l=>({id:o.id,price:o.price,currency:o.currency,airline:l.airline,flightNumbers:l.flightNumbers,origin:l.origin,destination:l.destination,depart:l.departure?new Date(l.departure).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—',arrive:l.arrival?new Date(l.arrival).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—',duration:formatDuration(l.duration),durationMinutes:(l.duration||'').replace(/PT/,'').match(/(\d+)H/)?.[1]*60+Number((l.duration||'').match(/(\d+)M/)?.[1]||0),stops:l.stops})));renderFlights();if(!liveOffers.length)$('flightList').innerHTML='<p class="no-results">No live offers returned for this search.</p>';
+ }catch(err){liveOffers=[];$('flightList').innerHTML='<p class="no-results">Could not connect to live search. Please try again.</p>';}
 });
 $('editSearch').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 document.querySelectorAll('.destination').forEach(btn=>btn.onclick=()=>{$('to').value=btn.dataset.city;$('searchForm').scrollIntoView({behavior:'smooth'});});
