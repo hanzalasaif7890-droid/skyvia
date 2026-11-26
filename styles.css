@@ -31,3 +31,9 @@
 
 /* Native airport autocomplete - remove conflicting custom dropdown styles */
 .airport-suggestions,.airport-suggestions-fixed{display:none!important}
+
+.airport-flow-list{position:static!important;width:100%;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;margin:6px 0 0;padding:4px;background:#fff;border:1px solid #dbe4ef;border-radius:10px;box-shadow:0 5px 16px rgba(10,40,80,.08)}
+.airport-flow-list[hidden]{display:none!important}
+.airport-flow-option{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:46px;padding:10px 12px;border:0;border-radius:8px;background:#fff;color:#10223e;text-align:left;touch-action:manipulation}
+.airport-flow-option:active{background:#eaf2ff}
+.airport-flow-name{font-weight:700}.airport-flow-code{color:#2465d8;font-weight:700}
