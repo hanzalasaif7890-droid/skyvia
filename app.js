@@ -1,4 +1,4 @@
-// SKYVIA demo search — UI-only sample flights (no live airline API yet)
+// SKYVIA live flight search powered by Ignav
 const $ = id => document.getElementById(id);
 let trip = 'round';
 const today = new Date(); today.setHours(0,0,0,0);
@@ -33,7 +33,6 @@ function airportAutocomplete(input){
  document.addEventListener('click',e=>{if(!wrap.contains(e.target)&&e.target!==input)wrap.innerHTML='';});
 }
 airportAutocomplete($('from'));airportAutocomplete($('to'));
-const sampleFlights=[{air:'IndiGo',code:'6E 204',depart:'06:10',arrive:'08:20',duration:'2h 10m',stops:0,price:5890},{air:'Air India',code:'AI 864',depart:'09:05',arrive:'11:25',duration:'2h 20m',stops:0,price:6420},{air:'Akasa Air',code:'QP 112',depart:'13:30',arrive:'16:10',duration:'2h 40m',stops:1,price:5190},{air:'IndiGo',code:'6E 501',depart:'18:45',arrive:'20:55',duration:'2h 10m',stops:0,price:7340}];
 let liveOffers=[];
 function formatDuration(iso){if(!iso)return "—";const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);return m?((m[1]||0)+"h "+(m[2]||0)+"m"):"—";}
 function renderFlights(){
@@ -58,5 +57,5 @@ $('searchForm').addEventListener('submit',async e=>{
 });
 $('editSearch').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 document.querySelectorAll('.destination').forEach(btn=>btn.onclick=()=>{$('to').value=btn.dataset.city;$('searchForm').scrollIntoView({behavior:'smooth'});});
-$('flightList').addEventListener('click',e=>{if(e.target.closest('.book-demo'))alert('Demo only: live fares and booking are not connected yet.');});
+$('flightList').addEventListener('click',async e=>{const btn=e.target.closest('.book-demo');if(!btn)return;const id=btn.dataset.offer;if(!id){alert('Booking link ID is missing for this itinerary.');return;}btn.disabled=true;btn.textContent='Getting booking links…';try{const r=await fetch('/api/booking-links',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ignav_id:id})});const d=await r.json();const links=(d.booking_options||[]).flatMap(o=>o.links||[]).filter(l=>l.url);if(!r.ok||!links.length){alert(d.error||'No booking links are available for this flight yet.');btn.disabled=false;btn.textContent='View booking options';return;}window.open(links[0].url.startsWith('http')?links[0].url:'https://'+links[0].url,'_blank','noopener');btn.disabled=false;btn.textContent='View booking options';}catch{alert('Could not retrieve booking links. Please try again.');btn.disabled=false;btn.textContent='View booking options';}});
 window.addEventListener('load',setDefaults);
